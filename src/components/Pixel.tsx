@@ -1,11 +1,11 @@
 
 function Pixel(): JSX.Element {
-    let backgroundColor = 'blue';
+    let backgroundColor = 'black';
 	return <span style={{
         backgroundColor,
 		margin: '1px',
-        width: '13px',
-        height: '13px',
+        width: '10px',
+        height: '10px',
 		display: "block",
 		float: "left",
 		fontSize: "5px"

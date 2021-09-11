@@ -13,13 +13,13 @@ function PixelGrid(): JSX.Element {
 				x: j,
 				y: i,
 				r: 0,
-				g: 255,
+				g: 0,
 				b: 0
 			};
 		}
 	}
-	return <div>
-        <div style={{width: 64 * 15 + 'px', height: 64 * 15 + 'px'}}>
+	return <div style={{width: '100%'}}>
+        <div style={{width: 64 * 12 + 'px', height: 64 * 12 + 'px', margin:'auto'}}>
             {grid.map((row, index) => (
                 <div key={index}>
                     {row.map((column: PixelData) => (
@@ -29,7 +29,7 @@ function PixelGrid(): JSX.Element {
             ))}
         </div>
         <Button color="primary" variant="outlined" onClick={() => {
-            axios.post("http://f1shp1.lan:4000/", { pixelGrid: grid }).catch(error => console.error(error));
+            axios.post("http://f1shp1.lan:4000/drawPixelGrid", { pixelGrid: grid }).catch(error => console.error(error));
         }}>Send</Button>
     </div>
 }
