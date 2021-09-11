@@ -1,7 +1,8 @@
 
 function Pixel(): JSX.Element {
+    let backgroundColor = 'blue';
 	return <span style={{
-        backgroundColor: 'blue',
+        backgroundColor,
 		margin: '1px',
         width: '13px',
         height: '13px',
