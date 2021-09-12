@@ -3,10 +3,10 @@ import PixelGrid from './components/PixelGrid';
 import { Grid } from '@material-ui/core';
 import ColorPicker from 'material-ui-color-picker';
 import { useAppSelector, useAppDispatch } from './hooks'
-import { setColor } from './colorSlice'
+import { setColor, getColor } from './slices/colorSlice'
 
 function App(): JSX.Element {
-    const count = useAppSelector((state) => state.color);
+    const color = useAppSelector((state) => getColor(state).color);
     const dispatch = useAppDispatch();
 	return (
 		<div className="App">
@@ -16,15 +16,15 @@ function App(): JSX.Element {
                     <PixelGrid />
                 </Grid>
                 <Grid item xs={4}>
-                <ColorPicker
-                    name='color'
-                    defaultValue='#000000'
-                    // value={this.state.color} - for controlled component
-                    onChange={color => { 
-                        setColor(color);
-                    }}
-                />
-</Grid>
+                    <ColorPicker
+                        name='color'
+                        defaultValue='#000000'
+                        value={color}
+                        onChange={color => {
+                            dispatch(setColor(color));
+                        }}
+                    />
+                </Grid>
             </Grid>
 		</div>
 	);
