@@ -1,11 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit'
+import brushReducer from './slices/brushSlice';
 import colorReducer from './slices/colorSlice';
 import pixelGridReducer from './slices/pixelGridSlice';
 
 const store = configureStore({
     reducer: {
         color: colorReducer,
-        pixelGrid: pixelGridReducer
+        pixelGrid: pixelGridReducer,
+		brush: brushReducer
     }
 });
 

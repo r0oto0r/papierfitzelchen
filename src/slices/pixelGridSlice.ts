@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
+import axios from 'axios';
 import type { RootState } from '../store'
 
 export interface PixelData { x:number, y:number, r: number; g: number; b: number };
@@ -28,9 +29,12 @@ export const pixelGridSlice = createSlice({
     name: 'pixelGrid', 
     initialState,
     reducers: {
-        setPixel: (state, action: PayloadAction<PixelData>) => {
-            const pixelData: PixelData = action.payload;
-            state.value[pixelData.y][pixelData.x] = pixelData;
+        setPixels: (state, action: PayloadAction<Array<PixelData>>) => {
+            const pixelDataArray: Array<PixelData> = action.payload;
+			for(const pixelData of pixelDataArray) {
+				state.value[pixelData.y][pixelData.x] = pixelData;
+			}
+			axios.post("http://f1shp1.lan:4000/drawPixels", { pixels: pixelDataArray }).catch(error => console.error(error));
         },
         resetGrid: (state) => {
             state.value = Array<Array<PixelData>>(64);
@@ -50,6 +54,6 @@ export const pixelGridSlice = createSlice({
     }
 })
 
-export const { setPixel, resetGrid } = pixelGridSlice.actions
+export const { setPixels, resetGrid } = pixelGridSlice.actions
 export const getPixelGrid = (state: RootState) => state.pixelGrid.value;
 export default pixelGridSlice.reducer
