@@ -14,12 +14,12 @@ interface Box {
 
 export const getPixelDataDiff = (fromDb: PixelData[], fromRequest:  PixelData[]): { toAdd: PixelData[], toDelete: PixelData[] } => {
 	return {
-		toAdd: fromRequest.filter(x => !fromDb.find(y => x.x === y.x && x.y === y.y)),
-		toDelete: fromDb.filter(x => !fromRequest.find(y => x.y === y.y && x.x === y.x))
+		toAdd: fromRequest.filter(x => !fromDb.find(y => x.x === y.x && x.y === y.y && x.r === y.r && x.g === y.g && x.b === y.b)),
+		toDelete: fromDb.filter(x => !fromRequest.find(y => x.y === y.y && x.x === y.x && x.r === y.r && x.g === y.g && x.b === y.b))
 	}
 };
 
-const GRID_COLOR = '#C2C2C2';
+const GRID_COLOR = '#292727';
 const WHITE = '#FFFFFF';
 let mouseDown = false;
 let buttonType: number;

@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import axios from 'axios';
+import { socketClient } from '..';
 import type { RootState } from '../store'
 
 export interface PixelData { x:number, y:number, r: number; g: number; b: number };
@@ -39,7 +40,8 @@ export const pixelGridSlice = createSlice({
 				state.grid[pixelData.y][pixelData.x] = pixelData;
 			}
             if(state.live) {
-                axios.post("http://f1shp1.lan:4000/drawPixels", { pixels: pixelDataArray }).catch(error => console.error(error));
+                socketClient.emit('/drawPixels', pixelDataArray);
+                //axios.post("http://f1shp1.lan:4000/drawPixels", { pixels: pixelDataArray }).catch(error => console.error(error));
             }
         },
         setLive: (state, action: PayloadAction<boolean>) => {
