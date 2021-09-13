@@ -1,12 +1,12 @@
 import './App.css';
 import PixelGrid from './components/PixelGrid';
-import { Button, ButtonGroup, Grid, Slider } from '@material-ui/core';
+import { Button, ButtonGroup, FormControlLabel, FormGroup, Grid, Slider, Switch } from '@material-ui/core';
 import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
 import { Color, ColorPicker } from 'material-ui-color';
 import { useAppSelector, useAppDispatch } from './hooks'
 import { setColor, getColor } from './slices/colorSlice'
 import axios from 'axios';
-import { getPixelGrid, PixelDataGrid, resetGrid } from './slices/pixelGridSlice';
+import { getPixelGrid, resetGrid, setLive } from './slices/pixelGridSlice';
 import { BRUSH_MAX, BRUSH_MIN, getBrush, setBrushSize, setToolType, ToolType } from './slices/brushSlice';
 import { ToggleButton } from '@material-ui/lab';
 import BrushIcon from '@material-ui/icons/Brush';
@@ -15,7 +15,7 @@ import HighlightOffIcon from '@material-ui/icons/HighlightOff';
 function App(): JSX.Element {
     const { color, colorHistory } = useAppSelector((state) => getColor(state));
 	const { size: brushSize, toolType } = useAppSelector((state) => getBrush(state));
-	const grid: PixelDataGrid = useAppSelector((state: any) => getPixelGrid(state));
+	const { grid, live } = useAppSelector((state: any) => getPixelGrid(state));
     const dispatch = useAppDispatch();
 
 	const handleSliderChange = (event: any, newValue: number | number[]) => {
@@ -23,14 +23,20 @@ function App(): JSX.Element {
 	};
 
 	const handleToolTypeChange = (event: React.MouseEvent<HTMLElement>, newToolType: ToolType) => {
-		dispatch(setToolType(newToolType));
+        if(newToolType) {
+            dispatch(setToolType(newToolType));
+        }
+	};
+
+    const handleLiveToggleChange = (event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
+		dispatch(setLive(checked));
 	};
 
 	return (
 		<div className="App">
             <Grid container>
-                <Grid item xs={4}/>
-                <Grid item xs={4}>
+                <Grid item xs={3}/>
+                <Grid item xs={5}>
                     <PixelGrid />
                 </Grid>
                 <Grid item xs={4}>
@@ -66,9 +72,7 @@ function App(): JSX.Element {
 						<ToggleButtonGroup
 							value={toolType}
 							exclusive
-							onChange={handleToolTypeChange}
-							aria-label="text alignment"
-							>
+							onChange={handleToolTypeChange} >
 								<ToggleButton value="brush">
 									<BrushIcon />
 								</ToggleButton>
@@ -78,6 +82,16 @@ function App(): JSX.Element {
 							</ToggleButtonGroup>
 						</Grid>
 					</Grid>
+                    <Grid container>
+						<Grid item xs={4}>
+                        <FormGroup>
+                            <FormControlLabel
+                                control={<Switch checked={live} onChange={handleLiveToggleChange} />}
+                                label="Live"
+                            />
+                            </FormGroup>
+                        </Grid>
+                    </Grid>
 					<br />
 					<Grid container>
 						<Grid item xs={4}>

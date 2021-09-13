@@ -6,7 +6,8 @@ export interface PixelData { x:number, y:number, r: number; g: number; b: number
 export type PixelDataGrid = Array<Array<PixelData>>;
 
 interface PixelGridState {
-    value: PixelDataGrid
+    grid: PixelDataGrid;
+    live: boolean;
 };
 
 const initialPixelDataGrid: Array<Array<PixelData>> = Array<Array<PixelData>>(64);
@@ -23,7 +24,10 @@ for(let i = 0; i < initialPixelDataGrid.length; ++i) {
     }
 }
 
-const initialState = { value: initialPixelDataGrid } as PixelGridState
+const initialState: PixelGridState = { 
+    grid: initialPixelDataGrid,
+    live: false
+};
 
 export const pixelGridSlice = createSlice({
     name: 'pixelGrid', 
@@ -32,16 +36,21 @@ export const pixelGridSlice = createSlice({
         setPixels: (state, action: PayloadAction<Array<PixelData>>) => {
             const pixelDataArray: Array<PixelData> = action.payload;
 			for(const pixelData of pixelDataArray) {
-				state.value[pixelData.y][pixelData.x] = pixelData;
+				state.grid[pixelData.y][pixelData.x] = pixelData;
 			}
-			axios.post("http://f1shp1.lan:4000/drawPixels", { pixels: pixelDataArray }).catch(error => console.error(error));
+            if(state.live) {
+                axios.post("http://f1shp1.lan:4000/drawPixels", { pixels: pixelDataArray }).catch(error => console.error(error));
+            }
+        },
+        setLive: (state, action: PayloadAction<boolean>) => {
+            state.live = action.payload;
         },
         resetGrid: (state) => {
-            state.value = Array<Array<PixelData>>(64);
-            for(let i = 0; i < state.value.length; ++i) {
-                state.value[i] = new Array<PixelData>(64);
-                for(let j = 0; j < state.value[i].length; ++j) {
-                    state.value[i][j] = {
+            state.grid = Array<Array<PixelData>>(64);
+            for(let i = 0; i < state.grid.length; ++i) {
+                state.grid[i] = new Array<PixelData>(64);
+                for(let j = 0; j < state.grid[i].length; ++j) {
+                    state.grid[i][j] = {
                         x: j,
                         y: i,
                         r: 0,
@@ -54,6 +63,6 @@ export const pixelGridSlice = createSlice({
     }
 })
 
-export const { setPixels, resetGrid } = pixelGridSlice.actions
-export const getPixelGrid = (state: RootState) => state.pixelGrid.value;
+export const { setPixels, setLive, resetGrid } = pixelGridSlice.actions
+export const getPixelGrid = (state: RootState) => state.pixelGrid;
 export default pixelGridSlice.reducer

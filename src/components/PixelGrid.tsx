@@ -28,7 +28,7 @@ let lastPixelsUnderMouse: Array<PixelData> = new Array<PixelData>();
 
 function PixelGrid(props: any): JSX.Element {
     const dispatch = useAppDispatch();
-	const grid: PixelDataGrid = useAppSelector((state: any) => getPixelGrid(state));
+	const grid: PixelDataGrid = useAppSelector((state: any) => getPixelGrid(state)).grid;
 	const { size: brushSize, toolType } = useAppSelector((state: any) => getBrush(state));
     const canvasRef = useRef<HTMLCanvasElement>(null);
 	const canvasRef2 = useRef<HTMLCanvasElement>(null);
