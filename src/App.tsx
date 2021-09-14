@@ -1,19 +1,20 @@
 import './App.css';
 import PixelGrid from './components/PixelGrid';
-import { Button, ButtonGroup, FormControlLabel, FormGroup, Grid, Slider, Switch } from '@material-ui/core';
+import { Button, ButtonGroup, FormControlLabel, FormGroup, Grid, Slider, Switch, TextField } from '@material-ui/core';
 import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
 import { Color, ColorPicker } from 'material-ui-color';
 import { useAppSelector, useAppDispatch } from './hooks'
 import { setColor, getColor } from './slices/colorSlice'
-import axios from 'axios';
 import { getPixelGrid, resetGrid, setLive } from './slices/pixelGridSlice';
 import { BRUSH_MAX, BRUSH_MIN, getBrush, setBrushSize, setToolType, ToolType } from './slices/brushSlice';
 import { ToggleButton } from '@material-ui/lab';
 import BrushIcon from '@material-ui/icons/Brush';
 import HighlightOffIcon from '@material-ui/icons/HighlightOff';
+import { getServerAddress, setServerAddress } from './slices/serverSlice';
 
 function App(): JSX.Element {
     const { color, colorHistory } = useAppSelector((state) => getColor(state));
+	const { address } = useAppSelector((state) => getServerAddress(state));
 	const { size: brushSize, toolType } = useAppSelector((state) => getBrush(state));
 	const { grid, live } = useAppSelector((state: any) => getPixelGrid(state));
     const dispatch = useAppDispatch();
@@ -30,6 +31,10 @@ function App(): JSX.Element {
 
     const handleLiveToggleChange = (event: React.ChangeEvent<HTMLInputElement>, checked: boolean) => {
 		dispatch(setLive(checked));
+	};
+
+	const handleServerAddressInputChange: React.ChangeEventHandler<HTMLInputElement | HTMLTextAreaElement> = (event) => {
+		dispatch(setServerAddress(event.target.value));
 	};
 
 	return (
@@ -82,6 +87,14 @@ function App(): JSX.Element {
 							</ToggleButtonGroup>
 						</Grid>
 					</Grid>
+					<br />
+					<Grid container>
+						<Grid item xs={4}>
+							<form noValidate autoComplete="off">
+								<TextField id="outlined-basic" label="server address" variant="outlined" value={address} onChange={handleServerAddressInputChange} />
+							</form>
+						</Grid>
+                    </Grid>
                     <Grid container>
 						<Grid item xs={4}>
                         <FormGroup>
@@ -97,10 +110,10 @@ function App(): JSX.Element {
 						<Grid item xs={4}>
 							<ButtonGroup color="primary" variant="contained" aria-label="contained primary button group">
 								<Button onClick={() => {
-									axios.post("http://f1shp1.lan:4000/drawPixelGrid", { pixelGrid: grid }).catch(error => console.error(error));
+									//axios.post("http://f1shp1.lan:4000/drawPixelGrid", { pixelGrid: grid }).catch(error => console.error(error));
 								}}>Send</Button>
 								<Button onClick={() => {
-									axios.get("http://f1shp1.lan:4000/clear").catch(error => console.error(error));
+									//axios.get("http://f1shp1.lan:4000/clear").catch(error => console.error(error));
 									dispatch(resetGrid());
 								}}>Clear</Button>
 							</ButtonGroup>

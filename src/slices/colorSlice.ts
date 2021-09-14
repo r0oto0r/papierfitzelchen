@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 import { Color, createColor } from 'material-ui-color';
-import type { RootState } from '../store'
+import type { RootState } from '../store/store'
 
 interface ColorState {
     color: Color,

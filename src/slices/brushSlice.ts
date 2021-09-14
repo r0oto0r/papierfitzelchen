@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
-import type { RootState } from '../store'
+import type { RootState } from '../store/store'
 
 export const BRUSH_MIN: number = 1;
 export const BRUSH_MAX: number = 200;
