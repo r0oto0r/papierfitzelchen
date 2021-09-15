@@ -1,15 +1,22 @@
-import { getPixelGrid, PixelData, PixelDataGrid, setPixels } from "../slices/pixelGridSlice";
-import { useAppDispatch, useAppSelector } from '../hooks'
+import { getPixelGrid, PixelData, setPixels } from "../slices/pixelGridSlice";
+import { useAppDispatch, useAppSelector } from '../hooks/general'
 import React, { useEffect, useRef } from "react";
 import { getColor, pushColorHistory } from "../slices/colorSlice";
 import convert from 'color-convert';
-import { getBrush, ToolType } from "../slices/brushSlice";
+import { BrushShape, getBrush, ToolType } from "../slices/brushSlice";
+import { SocketClient } from "../socket/SocketClient";
 
 interface Box {
     x: number;
     y: number;
     width: number;
     height: number;
+}
+
+interface Circle {
+    x: number;
+    y: number;
+    r: number;
 }
 
 export const getPixelDataDiff = (fromDb: PixelData[], fromRequest:  PixelData[]): { toAdd: PixelData[], toDelete: PixelData[] } => {
@@ -28,27 +35,30 @@ let lastPixelsUnderMouse: Array<PixelData> = new Array<PixelData>();
 
 function PixelGrid(props: any): JSX.Element {
     const dispatch = useAppDispatch();
-	const grid: PixelDataGrid = useAppSelector((state: any) => getPixelGrid(state)).grid;
-	const { size: brushSize, toolType } = useAppSelector((state: any) => getBrush(state));
+	const { grid, live } = useAppSelector((state: any) => getPixelGrid(state));
+	const { size: brushSize, toolType, shape } = useAppSelector((state: any) => getBrush(state));
+
     const canvasRef = useRef<HTMLCanvasElement>(null);
 	const canvasRef2 = useRef<HTMLCanvasElement>(null);
 
     const hexColorFromStore = useAppSelector((state: any) => getColor(state)).color;
 
-    const draw = (context: CanvasRenderingContext2D) => {
-        const canvas = canvasRef.current;
-        context.fillStyle = GRID_COLOR;
-        context.fillRect(0, 0, canvas ? canvas.width : 0, canvas ? canvas.height : 0);
-        for(let i = 0; i < 64; ++i) {
-            for(let j = 0; j < 64; ++j) {
-                const { r, g, b } = grid[i][j];
-                const hexColor = '#' + convert.rgb.hex([r, g, b]);
-                const xPos = (j * 10) + 2;
-                const yPos = (i * 10) + 2;
-                context.fillStyle = hexColor;
-                context.fillRect(xPos, yPos, 8, 8);
-            }
-        }
+    const drawGrid = (context: CanvasRenderingContext2D) => {
+		if(grid) {
+			const canvas = canvasRef.current;
+			context.fillStyle = GRID_COLOR;
+			context.fillRect(0, 0, canvas ? canvas.width : 0, canvas ? canvas.height : 0);
+			for(let i = 0; i < 64; ++i) {
+				for(let j = 0; j < 64; ++j) {
+					const { r, g, b } = grid[i][j];
+					const hexColor = '#' + convert.rgb.hex([r, g, b]);
+					const xPos = (j * 10) + 2;
+					const yPos = (i * 10) + 2;
+					context.fillStyle = hexColor;
+					context.fillRect(xPos, yPos, 8, 8);
+				}
+			}
+		}
     }
 
     function boxesIntersect(a: Box, b: Box) {
@@ -58,6 +68,29 @@ function PixelGrid(props: any): JSX.Element {
 				a.y + a.height > b.y
     }
 
+	function circleWithBoxIntersect(circle: Circle, box: Box) {
+		const circleDistanceX = Math.abs(circle.x - box.x);
+		const circleDistanceY = Math.abs(circle.y - box.y);
+
+		if (circleDistanceX > (box.width / 2 + circle.r)) {
+			return false;
+		}
+		if (circleDistanceY > (box.height / 2 + circle.r)) {
+			return false;
+		}
+		if (circleDistanceX <= (box.width / 2)) {
+			return true;
+		} 
+		if (circleDistanceY <= (box.height /2 )) {
+			return true;
+		}
+
+		const cornerDistanceSQ =	Math.pow((circleDistanceX - box.width / 2 ), 2) +
+									Math.pow((circleDistanceY - box.height / 2 ), 2);
+
+		return cornerDistanceSQ <= (Math.pow(circle.r, 2));
+    }
+
     function mouseOverPixel(event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
         const canvas = canvasRef2.current;
         if(!canvas) {
@@ -65,27 +98,44 @@ function PixelGrid(props: any): JSX.Element {
         }
 		const context = canvas?.getContext('2d');
         const rect = canvas.getBoundingClientRect();
-        let brushBoxX = event.clientX - rect.left - brushSize / 2;
-        let brushBoxY = event.clientY - rect.top - brushSize / 2;
-        let brushBoxWidth = brushSize;
-        let brushBoxHeight = brushSize;
+        const brushBoxX = event.clientX - rect.left - brushSize / 2;
+        const brushBoxY = event.clientY - rect.top - brushSize / 2;
+        const brushBoxWidth = brushSize;
+        const brushBoxHeight = brushSize;
 
-        let brushBox: Box = {
+		const brushCircleX = event.clientX - rect.left;
+		const brushCircleY = event.clientY - rect.top;
+		const brushCircleR = brushSize;
+
+		if(context) {
+			context.clearRect(0, 0, rect.width, rect.height);
+			context.globalAlpha = 0.5;
+			context.fillStyle = WHITE;
+			if(shape === BrushShape.square) {
+				context.fillRect(brushBoxX, brushBoxY, brushBoxWidth, brushBoxHeight);
+			} else {
+				context.beginPath();
+				context.arc(brushCircleX, brushCircleY, brushCircleR, 0, 2 * Math.PI);
+				context.closePath();
+				context.fill();
+			}
+			context.globalAlpha = 0.0;
+		}
+
+		const currentpPixelUnderMouse: Array<PixelData> = new Array<PixelData>();
+
+		const brushBox: Box = {
             x: brushBoxX,
             y: brushBoxY,
             width: brushBoxWidth,
             height: brushBoxHeight
         };
 
-		if(context) {
-			context.clearRect(0, 0, rect.width, rect.height);
-			context.globalAlpha = 0.5;
-			context.fillStyle = WHITE;
-			context.fillRect(brushBoxX, brushBoxY, brushBoxWidth, brushBoxHeight);
-			context.globalAlpha = 0.0;
-		}
-
-		const currentpPixelUnderMouse: Array<PixelData> = new Array<PixelData>();
+		const brushCircle: Circle = {
+            x: brushCircleX,
+            y: brushCircleY,
+            r: brushCircleR
+        };
 
         for(let i = 0; i < 64; ++i) {
             for(let j = 0; j < 64; ++j) {
@@ -98,7 +148,7 @@ function PixelGrid(props: any): JSX.Element {
                     height: 8
                 }
 
-                const doBoxesIntersect = boxesIntersect(brushBox, pixelBox);
+                const doBoxesIntersect = shape === BrushShape.square ? boxesIntersect(brushBox, pixelBox) : circleWithBoxIntersect(brushCircle, pixelBox);
                 if(doBoxesIntersect) {
                     currentpPixelUnderMouse.push(grid[i][j]);
                 }
@@ -108,6 +158,13 @@ function PixelGrid(props: any): JSX.Element {
 		lastPixelsUnderMouse = pixelsUnderMouse;
 		pixelsUnderMouse = currentpPixelUnderMouse;
     }
+
+	function drawPixels(pixels: Array<PixelData>) {
+		dispatch(setPixels(pixels));
+		if(live) {
+			SocketClient.emit('drawPixels', pixels);
+		}
+	}
 
     function colorPixelUnderMouse() {
 		const pixels: Array<PixelData> = new Array<PixelData>();
@@ -124,7 +181,7 @@ function PixelGrid(props: any): JSX.Element {
             }
         }
 
-		dispatch(setPixels(pixels));
+		drawPixels(pixels);
     }
 
 	function clearPixelUnderMouse() {
@@ -140,7 +197,7 @@ function PixelGrid(props: any): JSX.Element {
             }
         }
 
-		dispatch(setPixels(pixels));
+		drawPixels(pixels);
     }
 
     function handleMouseDown(event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
@@ -193,7 +250,7 @@ function PixelGrid(props: any): JSX.Element {
         const context = canvas?.getContext('2d');
 
         if(context) {
-            draw(context);
+            drawGrid(context);
         }
     })
 

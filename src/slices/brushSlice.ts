@@ -9,15 +9,22 @@ export enum ToolType {
 	eraser = 'eraser'
 }
 
+export enum BrushShape {
+	square = 'square',
+	circle = 'circle'
+}
+
 interface BrushState {
-    size: number
-	toolType: ToolType
+    size: number;
+	toolType: ToolType;
+	shape: BrushShape;
 }
 
 const initialState: BrushState = {
-    size: 1,
-	toolType: ToolType.brush
-}
+    size: 10,
+	toolType: ToolType.brush,
+	shape: BrushShape.square
+};
 
 export const brushSlice = createSlice({
     name: 'brush', 
@@ -35,10 +42,13 @@ export const brushSlice = createSlice({
         },
 		setToolType: (state, action: PayloadAction<ToolType>) => {
             state.toolType = action.payload;
+        },
+		setBrushShape: (state, action: PayloadAction<BrushShape>) => {
+            state.shape = action.payload;
         }
     }
-})
+});
 
-export const { setBrushSize, setToolType } = brushSlice.actions
+export const { setBrushSize, setToolType, setBrushShape } = brushSlice.actions;
 export const getBrush = (state: RootState) => state.brush;
-export default brushSlice.reducer
+export default brushSlice.reducer;

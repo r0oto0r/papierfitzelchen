@@ -10,7 +10,7 @@ interface ColorState {
 const initialState: ColorState = {
     color: createColor('#000000'),
 	colorHistory: {}
-}
+};
 
 export const colorSlice = createSlice({
     name: 'color', 
@@ -20,11 +20,11 @@ export const colorSlice = createSlice({
             state.color = action.payload;
         },
 		pushColorHistory: (state, action: PayloadAction<Color>) => {
-			state.colorHistory[0] = '#' + action.payload.hex;
+			state.colorHistory['#' + action.payload.hex] = '#' + action.payload.hex;
 		}
     }
-})
+});
 
-export const { setColor, pushColorHistory } = colorSlice.actions
+export const { setColor, pushColorHistory } = colorSlice.actions;
 export const getColor = (state: RootState) => state.color;
-export default colorSlice.reducer
+export default colorSlice.reducer;

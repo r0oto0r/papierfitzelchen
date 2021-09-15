@@ -1,17 +1,21 @@
-import { configureStore } from '@reduxjs/toolkit'
+import { configureStore, EnhancedStore } from '@reduxjs/toolkit'
 import brushReducer from '../slices/brushSlice';
 import colorReducer from '../slices/colorSlice';
+import imageSlice from '../slices/imageSlice';
 import pixelGridReducer from '../slices/pixelGridSlice';
 import serverReducer from '../slices/serverSlice';
 
-export const store = configureStore({
+const store: EnhancedStore = configureStore({
     reducer: {
         color: colorReducer,
-        pixelGrid: pixelGridReducer,
+        grid: pixelGridReducer,
 		brush: brushReducer,
-		server: serverReducer
+		server: serverReducer,
+		image: imageSlice
     }
 });
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
+
+export default store;
