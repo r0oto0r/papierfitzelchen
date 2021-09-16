@@ -5,19 +5,7 @@ import { getColor, pushColorHistory } from "../slices/colorSlice";
 import convert from 'color-convert';
 import { BrushShape, getBrush, ToolType } from "../slices/brushSlice";
 import { SocketClient } from "../socket/SocketClient";
-
-interface Box {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-}
-
-interface Circle {
-    x: number;
-    y: number;
-    r: number;
-}
+import { Box, boxesIntersect, Circle, circleWithBoxIntersect } from "../tools/Collision";
 
 export const getPixelDataDiff = (fromDb: PixelData[], fromRequest:  PixelData[]): { toAdd: PixelData[], toDelete: PixelData[] } => {
 	return {
@@ -33,19 +21,23 @@ let buttonType: number;
 let pixelsUnderMouse: Array<PixelData> = new Array<PixelData>();
 let lastPixelsUnderMouse: Array<PixelData> = new Array<PixelData>();
 
+export let mainCanvasRef: React.RefObject<HTMLCanvasElement>;
+export let backgroundCanvasRef: React.RefObject<HTMLCanvasElement>;
+export let imageDropCanvasRef: React.RefObject<HTMLCanvasElement>;
+
 function PixelGrid(props: any): JSX.Element {
     const dispatch = useAppDispatch();
 	const { grid, live } = useAppSelector((state: any) => getPixelGrid(state));
 	const { size: brushSize, toolType, shape } = useAppSelector((state: any) => getBrush(state));
 
-    const canvasRef = useRef<HTMLCanvasElement>(null);
-	const canvasRef2 = useRef<HTMLCanvasElement>(null);
+    mainCanvasRef = useRef<HTMLCanvasElement>(null);
+	backgroundCanvasRef = useRef<HTMLCanvasElement>(null);
 
     const hexColorFromStore = useAppSelector((state: any) => getColor(state)).color;
 
     const drawGrid = (context: CanvasRenderingContext2D) => {
 		if(grid) {
-			const canvas = canvasRef.current;
+			const canvas = mainCanvasRef.current;
 			context.fillStyle = GRID_COLOR;
 			context.fillRect(0, 0, canvas ? canvas.width : 0, canvas ? canvas.height : 0);
 			for(let i = 0; i < 64; ++i) {
@@ -61,38 +53,8 @@ function PixelGrid(props: any): JSX.Element {
 		}
     }
 
-    function boxesIntersect(a: Box, b: Box) {
-        return	a.x < b.x + b.width &&
-				a.x + a.width > b.x &&
-				a.y < b.y + b.height &&
-				a.y + a.height > b.y
-    }
-
-	function circleWithBoxIntersect(circle: Circle, box: Box) {
-		const circleDistanceX = Math.abs(circle.x - box.x);
-		const circleDistanceY = Math.abs(circle.y - box.y);
-
-		if (circleDistanceX > (box.width / 2 + circle.r)) {
-			return false;
-		}
-		if (circleDistanceY > (box.height / 2 + circle.r)) {
-			return false;
-		}
-		if (circleDistanceX <= (box.width / 2)) {
-			return true;
-		} 
-		if (circleDistanceY <= (box.height /2 )) {
-			return true;
-		}
-
-		const cornerDistanceSQ =	Math.pow((circleDistanceX - box.width / 2 ), 2) +
-									Math.pow((circleDistanceY - box.height / 2 ), 2);
-
-		return cornerDistanceSQ <= (Math.pow(circle.r, 2));
-    }
-
     function mouseOverPixel(event: React.MouseEvent<HTMLCanvasElement, MouseEvent>) {
-        const canvas = canvasRef2.current;
+        const canvas = backgroundCanvasRef.current;
         if(!canvas) {
             return false;
         }
@@ -119,7 +81,7 @@ function PixelGrid(props: any): JSX.Element {
 				context.closePath();
 				context.fill();
 			}
-			context.globalAlpha = 0.0;
+			context.globalAlpha = 1.0;
 		}
 
 		const currentpPixelUnderMouse: Array<PixelData> = new Array<PixelData>();
@@ -161,7 +123,7 @@ function PixelGrid(props: any): JSX.Element {
 
 	function drawPixels(pixels: Array<PixelData>) {
 		dispatch(setPixels(pixels));
-		if(live) {
+		if(live && pixels?.length > 0) {
 			SocketClient.emit('drawPixels', pixels);
 		}
 	}
@@ -246,7 +208,7 @@ function PixelGrid(props: any): JSX.Element {
 	}
 
     useEffect(() => {
-        const canvas = canvasRef.current;
+        const canvas = mainCanvasRef.current;
         const context = canvas?.getContext('2d');
 
         if(context) {
@@ -260,14 +222,14 @@ function PixelGrid(props: any): JSX.Element {
 				style={{position: 'absolute', left: 0, top: 0, zIndex: 0, backgroundColor: 'transparent'}}
                 width={(64 * 10) + 2}
                 height={(64 * 10) + 2}
-                ref={canvasRef}
+                ref={mainCanvasRef}
                 {...props}
             />
 			<canvas
 				style={{position: 'absolute', left: 0, top: 0, zIndex: 1, backgroundColor: 'transparent'}}
                 width={(64 * 10) + 2}
                 height={(64 * 10) + 2}
-                ref={canvasRef2}
+                ref={backgroundCanvasRef}
 				onMouseDown={(event) => handleMouseDown(event)}
                 onMouseUp={() => handleMouseUp()}
                 onMouseMove={(event) => handleMouseMove(event)}

@@ -4,7 +4,7 @@ import { Button, ButtonGroup, FormControlLabel, FormGroup, Grid, Slider, Switch,
 import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
 import { Color, ColorPicker } from 'material-ui-color';
 import { useAppSelector, useAppDispatch } from './hooks/general'
-import { setColor, getColor } from './slices/colorSlice'
+import { setColor, getColor, BRIGHTNESS_MIN, BRIGHTNESS_MAX, setBrightness } from './slices/colorSlice'
 import { getPixelGrid, resetGrid, setLive } from './slices/pixelGridSlice';
 import { BrushShape, BRUSH_MAX, BRUSH_MIN, getBrush, setBrushShape, setBrushSize, setToolType, ToolType } from './slices/brushSlice';
 import { ToggleButton } from '@material-ui/lab';
@@ -15,16 +15,22 @@ import { SocketClient } from './socket/SocketClient';
 import CheckBoxOutlineBlankIcon from '@material-ui/icons/CheckBoxOutlineBlank';
 import RadioButtonUncheckedIcon from '@material-ui/icons/RadioButtonUnchecked';
 import ImageDrop from './components/ImageDrop';
+import { Pixelator } from './tools/Pixelator';
 
 function App(): JSX.Element {
-    const { color, colorHistory } = useAppSelector((state) => getColor(state));
+    const { color, colorHistory, brightness } = useAppSelector((state) => getColor(state));
 	const { address, connected } = useAppSelector((state) => getServer(state));
 	const { size: brushSize, toolType, shape } = useAppSelector((state) => getBrush(state));
 	const { grid, live } = useAppSelector((state: any) => getPixelGrid(state));
     const dispatch = useAppDispatch();
 
-	const handleSliderChange = (event: any, newValue: number | number[]) => {
+	const handleBrushSizeChange = (event: any, newValue: number | number[]) => {
 		dispatch(setBrushSize(newValue as number));
+	};
+
+	const handleBrightnessChange = (event: any, newValue: number | number[]) => {
+		dispatch(setBrightness(newValue as number));
+		SocketClient.emit('setBrightness', newValue);
 	};
 
 	const handleToolTypeChange = (event: React.MouseEvent<HTMLElement>, newToolType: ToolType) => {
@@ -114,12 +120,28 @@ function App(): JSX.Element {
 						<Grid item xs={6}>
 							<Slider
 								value={brushSize}
-								onChange={handleSliderChange}
-								aria-labelledby="discrete-slider-small-steps"
+								onChange={handleBrushSizeChange}
 								step={1}
 								marks
 								min={BRUSH_MIN}
 								max={BRUSH_MAX}
+								valueLabelDisplay="auto"
+							/>
+						</Grid>
+						<Grid item xs={3}/>
+					</Grid>
+					<Grid container>
+						<Grid item xs={3}>
+							Brightness:
+						</Grid>
+						<Grid item xs={6}>
+							<Slider
+								value={brightness}
+								onChange={handleBrightnessChange}
+								step={1}
+								marks
+								min={BRIGHTNESS_MIN}
+								max={BRIGHTNESS_MAX}
 								valueLabelDisplay="auto"
 							/>
 						</Grid>
@@ -153,8 +175,13 @@ function App(): JSX.Element {
 					</Grid>
 					<br />
 					<Grid container>
-						<Grid item xs={9}>
+						<Grid item xs={6}>
 							<ImageDrop />
+						</Grid>
+						<Grid item xs={3} >
+							<Button variant="contained" onClick={() =>
+								Pixelator.pixelate()
+							}>Pixelate</Button>
 						</Grid>
 						<Grid item xs={3}/>
 					</Grid>

@@ -2,7 +2,7 @@ import { DropzoneArea } from "material-ui-dropzone";
 import { useAppDispatch } from "../hooks/general";
 import { removeImageData, setImageData } from "../slices/imageSlice";
 
-function ImageDrop(props: any): JSX.Element {
+function ImageDrop(): JSX.Element {
     const dispatch = useAppDispatch();
 	const reader = new FileReader();
 
@@ -11,7 +11,7 @@ function ImageDrop(props: any): JSX.Element {
 		if(imageFile) {
 			reader.onload = function(event){
 				if(event.target) {
-					dispatch(setImageData(event.target.result));
+					dispatch(setImageData(event.target.result as ArrayBuffer));
 				}
 			}
 			reader.readAsDataURL(imageFile);  
@@ -25,7 +25,13 @@ function ImageDrop(props: any): JSX.Element {
 	};
 
 	return <DropzoneArea
-				acceptedFiles={['image/*']}
+				acceptedFiles={[
+					'image/jpeg',
+					'image/png',
+					'image/bmp',
+					'image/tiff',
+					'image/gif'
+				]}
 				filesLimit={1}
 				dropzoneText={'images go here'}
 				onChange={handleFileChange}

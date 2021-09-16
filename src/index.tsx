@@ -6,14 +6,12 @@ import reportWebVitals from './reportWebVitals';
 import store from './store/store';
 import { Provider } from 'react-redux';
 import { SocketClient } from './socket/SocketClient';
-import ImagePreviewCanvas from './components/ImagePreviewCanvas';
 
 SocketClient.init();
 
 ReactDOM.render(
     <Provider store={store}>
         <React.StrictMode>
-			<ImagePreviewCanvas />
             <App />
         </React.StrictMode>
     </Provider>,
