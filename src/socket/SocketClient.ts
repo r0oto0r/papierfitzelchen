@@ -1,4 +1,5 @@
 import { io, Socket } from 'socket.io-client';
+import { PixelImage, setPixelImages } from '../slices/pixelImageSlice';
 import { setConnected } from '../slices/serverSlice';
 import store, { RootState } from '../store/store';
 
@@ -59,6 +60,11 @@ export class SocketClient {
 			console.log(`disconnected from ${this._serverAddress}`);
 			store.dispatch(setConnected(false));
 		});
+
+		this._socket.on('getPixelImagesResult', (pixelImages: Array<PixelImage>) => {
+			console.log('db pixel images received');
+			store.dispatch(setPixelImages(pixelImages));
+		})
 
 		this._socket.on('error', error => {
 			console.error(error);

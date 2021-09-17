@@ -30,6 +30,6 @@ export const imageSlice = createSlice({
     }
 });
 
-export const { setImageData, removeImageData, setImagePos } = imageSlice.actions;
+export const { setImageData, removeImageData } = imageSlice.actions;
 export const getImage = (state: RootState) => state.image;
 export default imageSlice.reducer;

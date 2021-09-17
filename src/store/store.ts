@@ -3,6 +3,7 @@ import brushReducer from '../slices/brushSlice';
 import colorReducer from '../slices/colorSlice';
 import imageSlice from '../slices/imageSlice';
 import pixelGridReducer from '../slices/pixelGridSlice';
+import pixelImageSlice from '../slices/pixelImageSlice';
 import serverReducer from '../slices/serverSlice';
 
 const store: EnhancedStore = configureStore({
@@ -11,7 +12,8 @@ const store: EnhancedStore = configureStore({
         grid: pixelGridReducer,
 		brush: brushReducer,
 		server: serverReducer,
-		image: imageSlice
+		image: imageSlice,
+		pixelImage: pixelImageSlice
     }
 });
 

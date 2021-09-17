@@ -1,5 +1,5 @@
 import './App.css';
-import PixelGrid from './components/PixelGrid';
+import PixelGrid, { mainCanvasRef } from './components/PixelGrid';
 import { Button, ButtonGroup, FormControlLabel, FormGroup, Grid, Slider, Switch, TextField } from '@material-ui/core';
 import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
 import { Color, ColorPicker } from 'material-ui-color';
@@ -11,17 +11,20 @@ import { ToggleButton } from '@material-ui/lab';
 import BrushIcon from '@material-ui/icons/Brush';
 import HighlightOffIcon from '@material-ui/icons/HighlightOff';
 import { getServer, setServerAddress } from './slices/serverSlice';
-import { SocketClient } from './socket/SocketClient';
 import CheckBoxOutlineBlankIcon from '@material-ui/icons/CheckBoxOutlineBlank';
 import RadioButtonUncheckedIcon from '@material-ui/icons/RadioButtonUnchecked';
 import ImageDrop from './components/ImageDrop';
 import { Pixelator } from './tools/Pixelator';
+import PixelImageGallery from './components/PixelImageGallery';
+import { addPixelImage, PixelImage } from './slices/pixelImageSlice';
+import { SocketClient } from './socket/SocketClient';
 
 function App(): JSX.Element {
     const { color, colorHistory, brightness } = useAppSelector((state) => getColor(state));
 	const { address, connected } = useAppSelector((state) => getServer(state));
 	const { size: brushSize, toolType, shape } = useAppSelector((state) => getBrush(state));
 	const { grid, live } = useAppSelector((state: any) => getPixelGrid(state));
+
     const dispatch = useAppDispatch();
 
 	const handleBrushSizeChange = (event: any, newValue: number | number[]) => {
@@ -53,21 +56,36 @@ function App(): JSX.Element {
 		dispatch(setServerAddress(event.target.value));
 	};
 
+	const saveImage = () => {
+		const canvas = mainCanvasRef.current;
+		if(!canvas) return;
+		const pixelImage: PixelImage = {
+			name: 'pixel image',
+			imageData: grid,
+			preview: canvas.toDataURL('image/jpeg')
+		};
+		SocketClient.emit('savePixelImage', pixelImage);
+		dispatch(addPixelImage(pixelImage));
+	}
+
 	return (
 		<div className="App">
             <Grid container>
                 <Grid item xs={4}>
 					<Grid container>
-						<Grid item xs={12}>
+						<Grid item xs={9}>
 							Settings:
 						</Grid>
+						<Grid item xs={3} />
 					</Grid>
 					<br />
 					<Grid container>
-						<Grid item xs={12}>
+						<Grid item xs={6}>
 							<form noValidate autoComplete="off">
 								<TextField size="small" id="outlined-basic" label="server address" variant="outlined" value={address} onChange={handleServerAddressInputChange} />
 							</form>
+						</Grid>
+						<Grid item xs={2}>
 							{connected ?
 									<Button color="secondary" variant="contained" onClick={() => 
 										SocketClient.disconnectFromServer()
@@ -76,12 +94,13 @@ function App(): JSX.Element {
 									<Button color="primary" variant="contained" onClick={() => 
 										SocketClient.connectToServer()
 									}>Connect</Button>
-								}
+							}
 						</Grid>
+						<Grid item xs={4} />
                     </Grid>
 					<br />
                     <Grid container>
-						<Grid item xs={12}>
+						<Grid item xs={9}>
 							<FormGroup >
 								<FormControlLabel
 									style={{justifyContent: 'center'}}
@@ -90,6 +109,7 @@ function App(): JSX.Element {
 								/>
 							</FormGroup>
                         </Grid>
+						<Grid item xs={3} />
                     </Grid>
 				</Grid>
                 <Grid item xs={5}>
@@ -97,7 +117,7 @@ function App(): JSX.Element {
                 </Grid>
                 <Grid item xs={3}>
 					<Grid container>
-						<Grid item xs={3}>
+						<Grid item xs={3} style={{textAlign: 'left'}}>
 							Color:
 						</Grid>
 						<Grid item xs={3}>
@@ -114,7 +134,7 @@ function App(): JSX.Element {
 						<Grid item xs={3}/>
 					</Grid>
 					<Grid container>
-						<Grid item xs={3}>
+						<Grid item xs={3} style={{textAlign: 'left'}}>
 							Brushsize:
 						</Grid>
 						<Grid item xs={6}>
@@ -122,7 +142,6 @@ function App(): JSX.Element {
 								value={brushSize}
 								onChange={handleBrushSizeChange}
 								step={1}
-								marks
 								min={BRUSH_MIN}
 								max={BRUSH_MAX}
 								valueLabelDisplay="auto"
@@ -131,7 +150,7 @@ function App(): JSX.Element {
 						<Grid item xs={3}/>
 					</Grid>
 					<Grid container>
-						<Grid item xs={3}>
+						<Grid item xs={3} style={{textAlign: 'left'}}>
 							Brightness:
 						</Grid>
 						<Grid item xs={6}>
@@ -139,7 +158,6 @@ function App(): JSX.Element {
 								value={brightness}
 								onChange={handleBrightnessChange}
 								step={1}
-								marks
 								min={BRIGHTNESS_MIN}
 								max={BRIGHTNESS_MAX}
 								valueLabelDisplay="auto"
@@ -175,10 +193,13 @@ function App(): JSX.Element {
 					</Grid>
 					<br />
 					<Grid container>
-						<Grid item xs={6}>
+						<Grid item xs={9}>
 							<ImageDrop />
 						</Grid>
-						<Grid item xs={3} >
+						<Grid item xs={3}/>
+					</Grid>
+					<Grid container>
+						<Grid item xs={9}>
 							<Button variant="contained" onClick={() =>
 								Pixelator.pixelate()
 							}>Pixelate</Button>
@@ -186,12 +207,16 @@ function App(): JSX.Element {
 						<Grid item xs={3}/>
 					</Grid>
 					<br />
+					<br />
 					<Grid container>
 						<Grid item xs={9}>
 							<ButtonGroup variant="contained" aria-label="contained primary button group">
 								<Button color="primary" onClick={() => {
 									SocketClient.emit('drawPixelGrid', grid);
 								}}>Send</Button>
+								<Button color="secondary" onClick={() => 
+									saveImage()
+								}>Save</Button>
 								<Button onClick={() => {
 									SocketClient.emit('clear');
 									dispatch(resetGrid());
@@ -202,6 +227,17 @@ function App(): JSX.Element {
 					</Grid>
                 </Grid>
             </Grid>
+			<br />
+			<br />
+			<br />
+			<br />
+			<br />
+			<br />
+			<Grid container>
+				<Grid item xs={12}>
+					<PixelImageGallery />
+				</Grid>
+			</Grid>
 		</div>
 	);
 }
