@@ -3,6 +3,7 @@ import type { RootState } from '../store/store'
 import { PixelDataGrid } from './pixelGridSlice';
 
 export interface PixelImage {
+	uuid: string;
 	name: string;
 	imageData: PixelDataGrid;
 	preview: string;
@@ -21,10 +22,10 @@ export const pixelImagelice = createSlice({
     initialState,
     reducers: {
 		addPixelImage: (state, action: PayloadAction<PixelImage>) => {
-            state.pixelImages = [
-				action.payload,
-				...state.pixelImages
-			];
+            state.pixelImages.push(action.payload);
+		},
+		removePixelImage: (state, action: PayloadAction<string>) => {
+            state.pixelImages = state.pixelImages.filter(pixelImage => pixelImage.uuid !== action.payload);
 		},
 		setPixelImages: (state, action: PayloadAction<Array<PixelImage>>) => {
             state.pixelImages = action.payload;
@@ -32,6 +33,6 @@ export const pixelImagelice = createSlice({
     }
 });
 
-export const { addPixelImage, setPixelImages } = pixelImagelice.actions
+export const { addPixelImage, removePixelImage, setPixelImages } = pixelImagelice.actions
 export const getPixelImage = (state: RootState) => state.pixelImage;
 export default pixelImagelice.reducer

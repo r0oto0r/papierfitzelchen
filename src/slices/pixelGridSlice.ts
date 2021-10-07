@@ -36,6 +36,9 @@ export const pixelGridSlice = createSlice({
     name: 'pixelGrid', 
     initialState,
     reducers: {
+		setPixelGrid: (state, action: PayloadAction<Array<Array<PixelData>>>) => {
+            state.grid = action.payload;
+        },
         setPixels: (state, action: PayloadAction<Array<PixelData>>) => {
             const pixelDataArray: Array<PixelData> = action.payload;
 			for(const pixelData of pixelDataArray) {
@@ -51,6 +54,6 @@ export const pixelGridSlice = createSlice({
     }
 });
 
-export const { setPixels, setLive, resetGrid } = pixelGridSlice.actions
+export const { setPixelGrid, setPixels, setLive, resetGrid } = pixelGridSlice.actions
 export const getPixelGrid = (state: RootState) => state.grid;
 export default pixelGridSlice.reducer
