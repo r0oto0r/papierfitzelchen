@@ -166,7 +166,6 @@ function ToolPanel(): JSX.Element {
 				<Grid item xs={3}/>
 			</Grid>
 	</React.Fragment>
-
 }
 
 export default ToolPanel;
